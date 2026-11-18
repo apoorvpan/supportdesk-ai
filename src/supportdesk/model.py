@@ -28,15 +28,35 @@ def create_client() -> OpenAI:
     return OpenAI(timeout=30.0, max_retries=0)
 
 
-def get_response(client: OpenAI, message: str) -> str:
-    """Send one message to the model and return its text response."""
+def get_response(
+    client: OpenAI,
+    history: list[dict[str, str]],
+    message: str,
+) -> str:
+    """Generate a reply and remember the exchange after success."""
+    user_message = {"role": "user", "content": message}
+    request_messages = history + [user_message]
+
     response = client.responses.create(
         model=os.getenv("OPENAI_MODEL", "gpt-4.1-mini"),
         instructions=INSTRUCTIONS,
-        input=message,
+        input=request_messages,
         max_output_tokens=300,
     )
 
-    return response.output_text.strip() or (
-        "No text response was returned. Please try again."
+    answer = response.output_text.strip()
+
+    if not answer:
+        return "No text response was returned. Please try again."
+
+    history.extend(
+        [
+            user_message,
+            {"role": "assistant", "content": answer},
+        ]
     )
+
+    # Retain the most recent 10 complete exchanges.
+    del history[:-20]
+
+    return answer

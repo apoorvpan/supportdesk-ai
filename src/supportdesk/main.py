@@ -16,7 +16,7 @@ def main() -> None:
     except ValueError as error:
         print(f"Configuration error: {error}")
         return
-
+    history: list[dict[str, str]] = []
     print("SupportDesk AI")
     print("Each question is independent for now.")
     print("Type 'exit' to quit.\n")
@@ -29,13 +29,16 @@ def main() -> None:
                 if message.lower() == "exit":
                     print("Goodbye!")
                     break
-
+                if message.lower() == "clear":
+                    history.clear()
+                    print("Conversation history cleared.\n")
+                    continue
                 if not message:
                     print("Please enter a question.\n")
                     continue
 
                 print("\nThinking...")
-                response = get_response(client, message)
+                response = get_response(client, history, message)
                 print(f"SupportDesk: {response}\n")
 
             except (KeyboardInterrupt, EOFError):
